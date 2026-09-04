@@ -1,442 +1,203 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>每日開銷</title>
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  >
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-
-  <title>每日開銷</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      margin: 0;
-      padding: 24px;
-      background: #f5f5f7;
-      color: #111;
-    }
-
-    .app {
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      padding: 24px;
-      border-radius: 22px;
-    }
-
-    h1 {
-      margin: 0 0 6px;
-      font-size: 36px;
-    }
-
-    .date {
-      margin-bottom: 22px;
-      font-size: 17px;
-      color: #666;
-    }
-
-    .label {
-      margin-top: 12px;
-      font-size: 15px;
-      color: #666;
-    }
-
-    input,
-    select,
-    button {
-      width: 100%;
-      padding: 15px;
-      margin: 7px 0;
-      font-size: 18px;
-      border-radius: 13px;
-      border: 1px solid #ccc;
-      background: white;
-    }
-
-    button {
-      background: black;
-      color: white;
-      border: none;
-      font-weight: bold;
-    }
-
-    .summary {
-      margin-top: 24px;
-      padding-top: 18px;
-      border-top: 1px solid #ddd;
-      font-size: 18px;
-      line-height: 1.9;
-    }
-
-    .summary strong {
-      font-size: 21px;
-    }
-
-    h2 {
-      margin-top: 30px;
-      font-size: 23px;
-    }
-
-    .expense {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 0;
-      border-bottom: 1px solid #eee;
-    }
-
-    .expense-info {
-      flex: 1;
-    }
-
-    .expense-item {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .expense-date {
-      margin-top: 4px;
-      color: #777;
-      font-size: 14px;
-    }
-
-    .expense-right {
-      text-align: right;
-    }
-
-    .expense-amount {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .delete {
-      width: auto;
-      margin-top: 6px;
-      padding: 6px 10px;
-      background: #eee;
-      color: #333;
-      font-size: 14px;
-      border-radius: 8px;
-    }
-
-    .empty {
-      color: #888;
-      padding: 14px 0;
-    }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:22px;background:#f5f5f7;font-family:-apple-system,sans-serif}
+.app{max-width:500px;margin:auto;background:#fff;padding:22px;border-radius:22px}
+h1{margin:0 0 5px;font-size:34px}
+.today{color:#666;margin-bottom:18px}
+label{display:block;color:#666;margin-top:10px;font-size:15px}
+input,select,button{width:100%;padding:13px;margin:5px 0;font-size:18px;border-radius:12px;border:1px solid #ccc}
+button{background:#000;color:#fff;border:0;font-weight:bold}
+.budgetBtn{background:#555}
+.summary{margin-top:20px;padding-top:15px;border-top:1px solid #ddd;line-height:1.9;font-size:18px}
+.summary b{font-size:20px}
+h2{margin-top:26px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #eee}
+.item{font-weight:bold;font-size:18px}
+.small{color:#777;font-size:14px}
+.right{text-align:right}
+.del{width:auto;padding:5px 9px;background:#eee;color:#333;font-size:14px}
+.empty{color:#888}
+</style>
 </head>
 
 <body>
-
 <div class="app">
 
-  <h1>每日開銷</h1>
+<h1>每日開銷</h1>
+<div class="today" id="today"></div>
 
-  <div class="date" id="todayDate"></div>
+<label>每月預算</label>
+<input id="budget" type="number" inputmode="numeric">
+<button class="budgetBtn" onclick="saveBudget()">儲存預算</button>
 
-  <div class="label">支出日期</div>
+<label>支出日期</label>
+<input id="date" type="date">
 
-  <input
-    id="expenseDate"
-    type="date"
-  >
+<label>支出項目</label>
+<select id="item">
+<option>煙錢</option>
+<option>便當</option>
+<option>加油</option>
+<option>狗糧</option>
+<option>其他</option>
+</select>
 
-  <div class="label">支出項目</div>
+<label>金額</label>
+<input id="amount" type="number" inputmode="numeric" placeholder="輸入金額">
 
-  <select id="item">
-    <option>煙錢</option>
-    <option>便當</option>
-    <option>加油</option>
-    <option>狗糧</option>
-    <option>其他</option>
-  </select>
+<button onclick="addExpense()">新增支出</button>
 
-  <div class="label">金額</div>
+<div class="summary">
+今日支出：<b>NT$ <span id="todayTotal">0</span></b><br>
+本月累計：<b>NT$ <span id="monthTotal">0</span></b><br>
+平均每日：<b>NT$ <span id="average">0</span></b><br>
+每月預算：<b>NT$ <span id="budgetShow">6000</span></b><br>
+剩餘預算：<b>NT$ <span id="remaining">6000</span></b>
+</div>
 
-  <input
-    id="amount"
-    type="number"
-    inputmode="numeric"
-    placeholder="輸入金額"
-  >
-
-  <button onclick="saveExpense()">新增支出</button>
-
-  <div class="summary">
-
-    今日支出：
-    <strong>
-      NT$ <span id="todayTotal">0</span>
-    </strong>
-    <br>
-
-    本月累計：
-    <strong>
-      NT$ <span id="monthTotal">0</span>
-    </strong>
-    <br>
-
-    平均每日：
-    <strong>
-      NT$ <span id="dailyAverage">0</span>
-    </strong>
-    <br>
-
-    剩餘預算：
-    <strong>
-      NT$ <span id="remaining">6000</span>
-    </strong>
-
-  </div>
-
-  <h2>本月明細</h2>
-
-  <div id="expenseList"></div>
+<h2>本月明細</h2>
+<div id="list"></div>
 
 </div>
 
 <script>
+let expenses=JSON.parse(localStorage.getItem("expenses"))||[];
+let monthlyBudget=Number(localStorage.getItem("monthlyBudget"))||6000;
 
-  let expenses =
-    JSON.parse(localStorage.getItem("expenses")) || [];
+const pad=n=>String(n).padStart(2,"0");
 
-  function getLocalDateString(date) {
+function localDate(d){
+ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
 
-    const year = date.getFullYear();
+function showDate(d){
+ return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+}
 
-    const month =
-      String(date.getMonth() + 1).padStart(2, "0");
+function saveData(){
+ localStorage.setItem("expenses",JSON.stringify(expenses));
+}
 
-    const day =
-      String(date.getDate()).padStart(2, "0");
+function saveBudget(){
+ const value=Number(document.getElementById("budget").value);
 
-    return `${year}-${month}-${day}`;
+ if(value<=0){
+  alert("請輸入正確預算");
+  return;
+ }
+
+ monthlyBudget=value;
+ localStorage.setItem("monthlyBudget",value);
+ update();
+ alert("預算已儲存");
+}
+
+function addExpense(){
+ const date=document.getElementById("date").value;
+ const item=document.getElementById("item").value;
+ const amount=Number(document.getElementById("amount").value);
+
+ if(!date){
+  alert("請選擇日期");
+  return;
+ }
+
+ if(amount<=0){
+  alert("請輸入正確金額");
+  return;
+ }
+
+ expenses.push({
+  date:date+"T12:00:00",
+  item:item,
+  amount:amount
+ });
+
+ saveData();
+ document.getElementById("amount").value="";
+ update();
+}
+
+function removeExpense(i){
+ if(!confirm("確定刪除這筆支出？"))return;
+
+ expenses.splice(i,1);
+ saveData();
+ update();
+}
+
+function update(){
+ const now=new Date();
+
+ let todayTotal=0;
+ let monthTotal=0;
+ let month=[];
+
+ expenses.forEach((e,i)=>{
+  const d=new Date(e.date);
+
+  if(
+   d.getFullYear()===now.getFullYear() &&
+   d.getMonth()===now.getMonth()
+  ){
+   monthTotal+=Number(e.amount);
+   month.push({...e,index:i});
+
+   if(d.getDate()===now.getDate()){
+    todayTotal+=Number(e.amount);
+   }
   }
-
-  function formatDisplayDate(date) {
-
-    return (
-      date.getFullYear() +
-      "/" +
-      (date.getMonth() + 1) +
-      "/" +
-      date.getDate()
-    );
-  }
-
-  function setDefaultDate() {
-
-    const now = new Date();
-
-    document.getElementById("expenseDate").value =
-      getLocalDateString(now);
-
-    document.getElementById("todayDate").textContent =
-      formatDisplayDate(now);
-  }
-
-  function saveExpense() {
-
-    const item =
-      document.getElementById("item").value;
-
-    const amount =
-      Number(document.getElementById("amount").value);
-
-    const selectedDate =
-      document.getElementById("expenseDate").value;
-
-    if (!selectedDate) {
-      alert("請選擇日期");
-      return;
-    }
-
-    if (!amount || amount <= 0) {
-      alert("請輸入正確金額");
-      return;
-    }
-
-    expenses.push({
-      item: item,
-      amount: amount,
-      date: selectedDate + "T12:00:00"
-    });
-
-    localStorage.setItem(
-      "expenses",
-      JSON.stringify(expenses)
-    );
-
-    document.getElementById("amount").value = "";
-
-    updateApp();
-  }
-
-  function deleteExpense(index) {
-
-    const ok =
-      confirm("確定刪除這筆支出？");
-
-    if (!ok) return;
-
-    expenses.splice(index, 1);
-
-    localStorage.setItem(
-      "expenses",
-      JSON.stringify(expenses)
-    );
-
-    updateApp();
-  }
-
-  function updateApp() {
-
-    const now = new Date();
-
-    let todayTotal = 0;
-    let monthTotal = 0;
-
-    const monthExpenses = [];
-
-    expenses.forEach((expense, index) => {
-
-      const d =
-        new Date(expense.date);
-
-      const sameMonth =
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth();
-
-      const sameDay =
-        sameMonth &&
-        d.getDate() === now.getDate();
-
-      if (sameMonth) {
-
-        monthTotal +=
-          Number(expense.amount);
-
-        monthExpenses.push({
-          ...expense,
-          originalIndex: index
-        });
-      }
-
-      if (sameDay) {
-
-        todayTotal +=
-          Number(expense.amount);
-      }
-    });
-
-    const elapsedDays =
-      now.getDate();
-
-    const dailyAverage =
-      Math.round(
-        monthTotal / elapsedDays
-      );
-
-    document.getElementById(
-      "todayTotal"
-    ).textContent = todayTotal;
-
-    document.getElementById(
-      "monthTotal"
-    ).textContent = monthTotal;
-
-    document.getElementById(
-      "dailyAverage"
-    ).textContent = dailyAverage;
-
-    document.getElementById(
-      "remaining"
-    ).textContent =
-      Math.max(6000 - monthTotal, 0);
-
-    renderExpenses(monthExpenses);
-  }
-
-  function renderExpenses(monthExpenses) {
-
-    const list =
-      document.getElementById("expenseList");
-
-    list.innerHTML = "";
-
-    if (monthExpenses.length === 0) {
-
-      list.innerHTML =
-        '<div class="empty">本月還沒有支出紀錄</div>';
-
-      return;
-    }
-
-    monthExpenses
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(b.date) -
-          new Date(a.date)
-      )
-      .forEach(expense => {
-
-        const d =
-          new Date(expense.date);
-
-        const row =
-          document.createElement("div");
-
-        row.className =
-          "expense";
-
-        row.innerHTML = `
-
-          <div class="expense-info">
-
-            <div class="expense-item">
-              ${expense.item}
-            </div>
-
-            <div class="expense-date">
-              ${formatDisplayDate(d)}
-            </div>
-
-          </div>
-
-          <div class="expense-right">
-
-            <div class="expense-amount">
-              NT$ ${expense.amount}
-            </div>
-
-            <button
-              class="delete"
-              onclick="deleteExpense(${expense.originalIndex})"
-            >
-              刪除
-            </button>
-
-          </div>
-        `;
-
-        list.appendChild(row);
-      });
-  }
-
-  setDefaultDate();
-  updateApp();
-
+ });
+
+ document.getElementById("todayTotal").textContent=todayTotal;
+ document.getElementById("monthTotal").textContent=monthTotal;
+ document.getElementById("average").textContent=Math.round(monthTotal/now.getDate());
+ document.getElementById("budgetShow").textContent=monthlyBudget;
+ document.getElementById("remaining").textContent=monthlyBudget-monthTotal;
+
+ const list=document.getElementById("list");
+ list.innerHTML="";
+
+ if(!month.length){
+  list.innerHTML='<div class="empty">本月還沒有支出紀錄</div>';
+  return;
+ }
+
+ month.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+ month.forEach(e=>{
+  const d=new Date(e.date);
+
+  list.innerHTML+=`
+   <div class="row">
+    <div>
+     <div class="item">${e.item}</div>
+     <div class="small">${showDate(d)}</div>
+    </div>
+
+    <div class="right">
+     <div class="item">NT$ ${e.amount}</div>
+     <button class="del" onclick="removeExpense(${e.index})">刪除</button>
+    </div>
+   </div>`;
+ });
+}
+
+const now=new Date();
+
+document.getElementById("today").textContent=showDate(now);
+document.getElementById("date").value=localDate(now);
+document.getElementById("budget").value=monthlyBudget;
+
+update();
 </script>
 
 </body>
