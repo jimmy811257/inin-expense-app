@@ -144,4 +144,300 @@
 
   <div class="date" id="todayDate"></div>
 
-  <div
+  <div class="label">支出日期</div>
+
+  <input
+    id="expenseDate"
+    type="date"
+  >
+
+  <div class="label">支出項目</div>
+
+  <select id="item">
+    <option>煙錢</option>
+    <option>便當</option>
+    <option>加油</option>
+    <option>狗糧</option>
+    <option>其他</option>
+  </select>
+
+  <div class="label">金額</div>
+
+  <input
+    id="amount"
+    type="number"
+    inputmode="numeric"
+    placeholder="輸入金額"
+  >
+
+  <button onclick="saveExpense()">新增支出</button>
+
+  <div class="summary">
+
+    今日支出：
+    <strong>
+      NT$ <span id="todayTotal">0</span>
+    </strong>
+    <br>
+
+    本月累計：
+    <strong>
+      NT$ <span id="monthTotal">0</span>
+    </strong>
+    <br>
+
+    平均每日：
+    <strong>
+      NT$ <span id="dailyAverage">0</span>
+    </strong>
+    <br>
+
+    剩餘預算：
+    <strong>
+      NT$ <span id="remaining">6000</span>
+    </strong>
+
+  </div>
+
+  <h2>本月明細</h2>
+
+  <div id="expenseList"></div>
+
+</div>
+
+<script>
+
+  let expenses =
+    JSON.parse(localStorage.getItem("expenses")) || [];
+
+  function getLocalDateString(date) {
+
+    const year = date.getFullYear();
+
+    const month =
+      String(date.getMonth() + 1).padStart(2, "0");
+
+    const day =
+      String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatDisplayDate(date) {
+
+    return (
+      date.getFullYear() +
+      "/" +
+      (date.getMonth() + 1) +
+      "/" +
+      date.getDate()
+    );
+  }
+
+  function setDefaultDate() {
+
+    const now = new Date();
+
+    document.getElementById("expenseDate").value =
+      getLocalDateString(now);
+
+    document.getElementById("todayDate").textContent =
+      formatDisplayDate(now);
+  }
+
+  function saveExpense() {
+
+    const item =
+      document.getElementById("item").value;
+
+    const amount =
+      Number(document.getElementById("amount").value);
+
+    const selectedDate =
+      document.getElementById("expenseDate").value;
+
+    if (!selectedDate) {
+      alert("請選擇日期");
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      alert("請輸入正確金額");
+      return;
+    }
+
+    expenses.push({
+      item: item,
+      amount: amount,
+      date: selectedDate + "T12:00:00"
+    });
+
+    localStorage.setItem(
+      "expenses",
+      JSON.stringify(expenses)
+    );
+
+    document.getElementById("amount").value = "";
+
+    updateApp();
+  }
+
+  function deleteExpense(index) {
+
+    const ok =
+      confirm("確定刪除這筆支出？");
+
+    if (!ok) return;
+
+    expenses.splice(index, 1);
+
+    localStorage.setItem(
+      "expenses",
+      JSON.stringify(expenses)
+    );
+
+    updateApp();
+  }
+
+  function updateApp() {
+
+    const now = new Date();
+
+    let todayTotal = 0;
+    let monthTotal = 0;
+
+    const monthExpenses = [];
+
+    expenses.forEach((expense, index) => {
+
+      const d =
+        new Date(expense.date);
+
+      const sameMonth =
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth();
+
+      const sameDay =
+        sameMonth &&
+        d.getDate() === now.getDate();
+
+      if (sameMonth) {
+
+        monthTotal +=
+          Number(expense.amount);
+
+        monthExpenses.push({
+          ...expense,
+          originalIndex: index
+        });
+      }
+
+      if (sameDay) {
+
+        todayTotal +=
+          Number(expense.amount);
+      }
+    });
+
+    const elapsedDays =
+      now.getDate();
+
+    const dailyAverage =
+      Math.round(
+        monthTotal / elapsedDays
+      );
+
+    document.getElementById(
+      "todayTotal"
+    ).textContent = todayTotal;
+
+    document.getElementById(
+      "monthTotal"
+    ).textContent = monthTotal;
+
+    document.getElementById(
+      "dailyAverage"
+    ).textContent = dailyAverage;
+
+    document.getElementById(
+      "remaining"
+    ).textContent =
+      Math.max(6000 - monthTotal, 0);
+
+    renderExpenses(monthExpenses);
+  }
+
+  function renderExpenses(monthExpenses) {
+
+    const list =
+      document.getElementById("expenseList");
+
+    list.innerHTML = "";
+
+    if (monthExpenses.length === 0) {
+
+      list.innerHTML =
+        '<div class="empty">本月還沒有支出紀錄</div>';
+
+      return;
+    }
+
+    monthExpenses
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.date) -
+          new Date(a.date)
+      )
+      .forEach(expense => {
+
+        const d =
+          new Date(expense.date);
+
+        const row =
+          document.createElement("div");
+
+        row.className =
+          "expense";
+
+        row.innerHTML = `
+
+          <div class="expense-info">
+
+            <div class="expense-item">
+              ${expense.item}
+            </div>
+
+            <div class="expense-date">
+              ${formatDisplayDate(d)}
+            </div>
+
+          </div>
+
+          <div class="expense-right">
+
+            <div class="expense-amount">
+              NT$ ${expense.amount}
+            </div>
+
+            <button
+              class="delete"
+              onclick="deleteExpense(${expense.originalIndex})"
+            >
+              刪除
+            </button>
+
+          </div>
+        `;
+
+        list.appendChild(row);
+      });
+  }
+
+  setDefaultDate();
+  updateApp();
+
+</script>
+
+</body>
+</html>
