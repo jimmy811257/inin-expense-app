@@ -39,8 +39,14 @@
     }
 
     .date {
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       font-size: 17px;
+      color: #666;
+    }
+
+    .label {
+      margin-top: 12px;
+      font-size: 15px;
       color: #666;
     }
 
@@ -48,12 +54,12 @@
     select,
     button {
       width: 100%;
-      box-sizing: border-box;
       padding: 15px;
       margin: 7px 0;
       font-size: 18px;
       border-radius: 13px;
       border: 1px solid #ccc;
+      background: white;
     }
 
     button {
@@ -138,217 +144,4 @@
 
   <div class="date" id="todayDate"></div>
 
-  <select id="item">
-    <option>煙錢</option>
-    <option>便當</option>
-    <option>加油</option>
-    <option>狗糧</option>
-    <option>其他</option>
-  </select>
-
-  <input
-    id="amount"
-    type="number"
-    inputmode="numeric"
-    placeholder="輸入金額"
-  >
-
-  <button onclick="saveExpense()">新增支出</button>
-
-  <div class="summary">
-    今日支出：
-    <strong>NT$ <span id="todayTotal">0</span></strong>
-    <br>
-
-    本月累計：
-    <strong>NT$ <span id="monthTotal">0</span></strong>
-    <br>
-
-    平均每日：
-    <strong>NT$ <span id="dailyAverage">0</span></strong>
-    <br>
-
-    剩餘預算：
-    <strong>NT$ <span id="remaining">6000</span></strong>
-  </div>
-
-  <h2>本月明細</h2>
-
-  <div id="expenseList"></div>
-
-</div>
-
-<script>
-  let expenses =
-    JSON.parse(localStorage.getItem("expenses")) || [];
-
-  function formatLocalDate(date) {
-    return (
-      date.getFullYear() +
-      "/" +
-      (date.getMonth() + 1) +
-      "/" +
-      date.getDate()
-    );
-  }
-
-  function saveExpense() {
-    const item =
-      document.getElementById("item").value;
-
-    const amount =
-      Number(document.getElementById("amount").value);
-
-    if (!amount || amount <= 0) {
-      alert("請輸入正確金額");
-      return;
-    }
-
-    expenses.push({
-      item: item,
-      amount: amount,
-      date: new Date().toISOString()
-    });
-
-    localStorage.setItem(
-      "expenses",
-      JSON.stringify(expenses)
-    );
-
-    document.getElementById("amount").value = "";
-
-    updateApp();
-  }
-
-  function deleteExpense(index) {
-    const ok = confirm("確定刪除這筆支出？");
-
-    if (!ok) return;
-
-    expenses.splice(index, 1);
-
-    localStorage.setItem(
-      "expenses",
-      JSON.stringify(expenses)
-    );
-
-    updateApp();
-  }
-
-  function updateApp() {
-    const now = new Date();
-
-    document.getElementById("todayDate").textContent =
-      formatLocalDate(now);
-
-    let todayTotal = 0;
-    let monthTotal = 0;
-
-    const monthExpenses = [];
-
-    expenses.forEach((expense, index) => {
-      const d = new Date(expense.date);
-
-      const sameMonth =
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth();
-
-      const sameDay =
-        sameMonth &&
-        d.getDate() === now.getDate();
-
-      if (sameMonth) {
-        monthTotal += Number(expense.amount);
-
-        monthExpenses.push({
-          ...expense,
-          originalIndex: index
-        });
-      }
-
-      if (sameDay) {
-        todayTotal += Number(expense.amount);
-      }
-    });
-
-    const elapsedDays = now.getDate();
-
-    const dailyAverage =
-      elapsedDays > 0
-        ? Math.round(monthTotal / elapsedDays)
-        : 0;
-
-    document.getElementById("todayTotal").textContent =
-      todayTotal;
-
-    document.getElementById("monthTotal").textContent =
-      monthTotal;
-
-    document.getElementById("dailyAverage").textContent =
-      dailyAverage;
-
-    document.getElementById("remaining").textContent =
-      Math.max(6000 - monthTotal, 0);
-
-    renderExpenses(monthExpenses);
-  }
-
-  function renderExpenses(monthExpenses) {
-    const list =
-      document.getElementById("expenseList");
-
-    list.innerHTML = "";
-
-    if (monthExpenses.length === 0) {
-      list.innerHTML =
-        '<div class="empty">本月還沒有支出紀錄</div>';
-
-      return;
-    }
-
-    monthExpenses
-      .slice()
-      .reverse()
-      .forEach(expense => {
-
-        const d = new Date(expense.date);
-
-        const row =
-          document.createElement("div");
-
-        row.className = "expense";
-
-        row.innerHTML = `
-          <div class="expense-info">
-            <div class="expense-item">
-              ${expense.item}
-            </div>
-
-            <div class="expense-date">
-              ${formatLocalDate(d)}
-            </div>
-          </div>
-
-          <div class="expense-right">
-            <div class="expense-amount">
-              NT$ ${expense.amount}
-            </div>
-
-            <button
-              class="delete"
-              onclick="deleteExpense(${expense.originalIndex})"
-            >
-              刪除
-            </button>
-          </div>
-        `;
-
-        list.appendChild(row);
-      });
-  }
-
-  updateApp();
-</script>
-
-</body>
-</html>
+  <div
